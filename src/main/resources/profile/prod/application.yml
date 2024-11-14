@@ -1,0 +1,12 @@
+
+server:
+  port: 10007
+
+# Logging configuration
+log:
+  collectionName: LinkShortLog
+
+# Security settings
+security:
+  ignored: /**/public
+
