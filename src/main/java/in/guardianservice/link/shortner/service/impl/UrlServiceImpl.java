@@ -89,7 +89,7 @@ public class UrlServiceImpl implements UrlService {
     }
 
     @Override
-    public BaseResponse getOriginalUrl(String shortCode) {
+    public String getOriginalUrl(String shortCode) {
         logger.info("Inside getOriginalUrl method for short code {}", shortCode);
 
         try {
@@ -98,33 +98,18 @@ public class UrlServiceImpl implements UrlService {
             if (urlShortener != null) {
                 boolean isLinkExpired = checkLinkExpire(urlShortener.getExpirationDate());
                 if (isLinkExpired) {
-                    Collection<Error> errors = new ArrayList<>();
-                    errors.add(Error.builder()
-                            .message(Constant.LINK_EXPIRED)
-                            .errorCode(String.valueOf(Error.ERROR_TYPE.BUSINESS.toCode()))
-                            .errorType(Error.ERROR_TYPE.BUSINESS.toValue())
-                            .level(Error.SEVERITY.MEDIUM.name())
-                            .build());
-                    return ResponseUtility.getBaseResponse(HttpStatus.GONE, errors);
+                    logger.error(Constant.LINK_EXPIRED);
+                    return null;
                 }
-
-                return ResponseUtility.getBaseResponse(HttpStatus.OK, URI.create(urlShortener.getOriginalUrl()));
+                return urlShortener.getOriginalUrl();
             } else {
-                Collection<Error> errors = new ArrayList<>();
-                errors.add(Error.builder()
-                        .message(Constant.NO_LINK_FOUND_BY_SHORT_CODE)
-                        .errorCode(String.valueOf(Error.ERROR_TYPE.BAD_REQUEST.toCode()))
-                        .errorType(Error.ERROR_TYPE.BAD_REQUEST.toValue())
-                        .level(Error.SEVERITY.LOW.name())
-                        .build());
-                return ResponseUtility.getBaseResponse(HttpStatus.BAD_REQUEST, errors);
+                logger.error(Constant.NO_LINK_FOUND_BY_SHORT_CODE);
+                return null;
             }
 
         } catch (Exception e) {
-            Error error = new Error();
-            error.setMessage(e.getMessage());
             logger.error("exception occurred while getting original url with probable cause - ", e);
-            return ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
+            return null;
         }
 
     }

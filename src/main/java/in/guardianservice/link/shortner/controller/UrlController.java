@@ -4,6 +4,7 @@ import in.guardianservice.link.shortner.constants.Constant;
 import in.guardianservice.link.shortner.model.UrlShortener;
 import in.guardianservice.link.shortner.response.BaseResponse;
 import in.guardianservice.link.shortner.service.UrlService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.net.URI;
 
 @RestController
@@ -21,6 +23,11 @@ public class UrlController {
     @Autowired
     private UrlService urlService;
 
+    @GetMapping("/welcome")
+    public String welcome() {
+        return "********** Welcome to link shortner **********";
+    }
+
     @PostMapping("/shorten")
     public ResponseEntity<BaseResponse> shortenUrl(@RequestParam String originalUrl, @RequestParam int days) {
         logger.info(Constant.CONTROLLER_STARTED, "shorten");
@@ -28,8 +35,13 @@ public class UrlController {
     }
 
     @GetMapping("/{shortCode}")
-    public ResponseEntity<BaseResponse> redirectToOriginalUrl(@PathVariable String shortCode) {
+    public void redirect(@PathVariable String shortCode, HttpServletResponse response) throws IOException {
         logger.info(Constant.CONTROLLER_STARTED, "shortenCode");
-        return new ResponseEntity<>(urlService.getOriginalUrl(shortCode), HttpStatus.OK);
+        String longUrl = urlService.getOriginalUrl(shortCode);
+        if (longUrl != null) {
+            response.sendRedirect(longUrl);
+        } else {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, Constant.NO_LINK_FOUND_BY_SHORT_CODE);
+        }
     }
 }

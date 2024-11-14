@@ -8,5 +8,5 @@ import java.util.Optional;
 public interface UrlService {
     BaseResponse createShortUrl(String originalUrl, int days);
 
-    BaseResponse getOriginalUrl(String shortCode);
+    String getOriginalUrl(String shortCode);
 }
