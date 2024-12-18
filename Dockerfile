@@ -7,6 +7,9 @@ WORKDIR /linkShortner
 # Copy the JAR file (or build the app if using source code)
 COPY target/*.jar app.jar
 
+# Copy the properties file into the container
+COPY urlShortner.properties /opt/configs/urlShortner.properties
+
 # Expose the port your app will run on
 EXPOSE 10007
 
