@@ -3,7 +3,7 @@
         <file>/opt/logs/linkShortener.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- Rotate logs daily -->
-            <fileNamePattern>/logs/app.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>/logs/linkShortener.%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- Keep logs for 30 days -->
             <maxHistory>30</maxHistory>
         </rollingPolicy>
