@@ -2,10 +2,11 @@ package in.guardianservice.link.shortner.service.impl;
 
 import in.guardianservice.link.shortner.constants.Constant;
 import in.guardianservice.link.shortner.model.UrlShortener;
-import in.guardianservice.link.shortner.repository.MongoService;
+import in.guardianservice.link.shortner.repository.UrlRepository;
 import in.guardianservice.link.shortner.response.BaseResponse;
 import in.guardianservice.link.shortner.response.Error;
 import in.guardianservice.link.shortner.service.UrlService;
+import in.guardianservice.link.shortner.utility.QRCodeGenerator;
 import in.guardianservice.link.shortner.utility.ResponseUtility;
 import in.guardianservice.link.shortner.utility.ShortcodeGenerator;
 import org.slf4j.Logger;
@@ -13,21 +14,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
+;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class UrlServiceImpl implements UrlService {
 
     private static final Logger logger = LoggerFactory.getLogger(UrlServiceImpl.class);
-    private static final int DAY_IN_MILLIS = 24 * 60 * 60 * 1000;
+    public static final String HTTPS_SHORTENER_GUARDIANSERVICES_IN = "https://shortener.guardianservices.in/";
 
     @Autowired
-    private MongoService mongoService;
+    private UrlRepository urlRepository;
 
     @Override
     public BaseResponse createShortUrl(String originalUrl, int days) {
@@ -39,15 +37,17 @@ public class UrlServiceImpl implements UrlService {
 
             String shortCode = ShortcodeGenerator.generateShortCode(originalUrl);
 
-            UrlShortener existingUrlShortner = mongoService.getUrlShortByShortCode(shortCode);
+            Optional<UrlShortener> existingUrlShortner = urlRepository.getUrlShortByShortCode(shortCode);
 
-            baseResponse =  checkExistingUrl(existingUrlShortner, errors);
+            baseResponse = existingUrlShortner.map(shortener -> checkExistingUrl(shortener, errors)).orElse(null);
             if (null != baseResponse) {
                 return baseResponse;
             }
+            String shortUrl = HTTPS_SHORTENER_GUARDIANSERVICES_IN + shortCode;
+            String qrCode = QRCodeGenerator.generateQRCode(shortUrl);
 
-            UrlShortener urlShortener = new UrlShortener(originalUrl, shortCode, new Date(), createExpiryDate(days), true);
-            boolean success = mongoService.saveUrlShort(urlShortener);
+            UrlShortener urlShortener = new UrlShortener(originalUrl, shortCode, shortUrl, qrCode, createExpiryDate(days));
+            boolean success = urlRepository.saveUrlShort(urlShortener);
             if (success) {
                 logger.info("Successfully saved url shortener");
                 return ResponseUtility.getBaseResponse(HttpStatus.OK, urlShortener);
@@ -72,7 +72,7 @@ public class UrlServiceImpl implements UrlService {
 
     private BaseResponse checkExistingUrl(UrlShortener checkExistingUrl, Collection<Error> errors) {
         if (checkExistingUrl != null) {
-            boolean isLinkExpired = checkLinkExpire(checkExistingUrl.getExpirationDate());
+            boolean isLinkExpired = checkLinkExpire(checkExistingUrl.getExpiredAt());
             if (isLinkExpired) {
                 errors.add(Error.builder()
                         .message(Constant.LINK_EXPIRED)
@@ -82,7 +82,6 @@ public class UrlServiceImpl implements UrlService {
                         .build());
                 return ResponseUtility.getBaseResponse(HttpStatus.GONE, errors);
             }
-            checkExistingUrl.setMessage(Constant.URL_ALREADY_EXISTS_AND_ACTIVE);
             return ResponseUtility.getBaseResponse(HttpStatus.OK, checkExistingUrl);
         }
         return null;
@@ -93,15 +92,15 @@ public class UrlServiceImpl implements UrlService {
         logger.info("Inside getOriginalUrl method for short code {}", shortCode);
 
         try {
-            UrlShortener urlShortener = mongoService.getUrlShortByShortCode(shortCode);
+            Optional<UrlShortener> urlShortener = urlRepository.getUrlShortByShortCode(shortCode);
 
-            if (urlShortener != null) {
-                boolean isLinkExpired = checkLinkExpire(urlShortener.getExpirationDate());
+            if (urlShortener.isPresent()) {
+                boolean isLinkExpired = checkLinkExpire(urlShortener.get().getExpiredAt());
                 if (isLinkExpired) {
                     logger.error(Constant.LINK_EXPIRED);
                     return null;
                 }
-                return urlShortener.getOriginalUrl();
+                return urlShortener.get().getLongUrl();
             } else {
                 logger.error(Constant.NO_LINK_FOUND_BY_SHORT_CODE);
                 return null;
@@ -129,13 +128,13 @@ public class UrlServiceImpl implements UrlService {
         return false;
     }
 
-    private Date createExpiryDate(int days) {
-        return new Date(new Date().getTime() + (long) days * DAY_IN_MILLIS);
+    private LocalDateTime createExpiryDate(int days) {
+        return LocalDateTime.now().plusDays(days);
     }
 
-    private boolean checkLinkExpire(Date expirationDate) {
-        Date now = new Date();
-        return expirationDate.before(now);
+    private boolean checkLinkExpire(LocalDateTime expirationDate) {
+        LocalDateTime now = LocalDateTime.now();
+        return expirationDate.isBefore(now);
     }
 
 }

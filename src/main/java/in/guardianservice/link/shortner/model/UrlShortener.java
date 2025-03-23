@@ -1,97 +1,48 @@
 package in.guardianservice.link.shortner.model;
 
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.*;
+import lombok.Data;
 
-import java.util.Date;
-
-@Document(collection = "urls")
+import java.time.LocalDateTime;
+@Entity
+@Table(name = "url_shortener")
+@Data
 public class UrlShortener {
 
     @Id
-    private String id;
-    private String originalUrl;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "longurl", nullable = false, length = 1000)
+    private String longUrl;
+
+    @Column(name = "shortcode", nullable = false, length = 25)
     private String shortCode;
-    private Date creationDate;
-    private Date expirationDate;
-    private boolean active;
-    private String message;
 
-    public UrlShortener(String originalUrl, String shortCode, Date creationDate, Date expirationDate, boolean active) {
-        this.originalUrl = originalUrl;
+    @Column(name = "shorturl", nullable = false, length = 50)
+    private String shortUrl;
+
+    @Column(name = "qrcode", columnDefinition = "TEXT")
+    private String qrCode;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "expired_at")
+    private LocalDateTime expiredAt;
+
+    // Constructors, getters, and setters
+
+    public UrlShortener() {}
+
+    public UrlShortener(String longUrl, String shortCode, String shortUrl, String qrCode, LocalDateTime expiredAt) {
+        this.longUrl = longUrl;
         this.shortCode = shortCode;
-        this.creationDate = creationDate;
-        this.expirationDate = expirationDate;
-        this.active = active;
+        this.shortUrl = shortUrl;
+        this.qrCode = qrCode;
+        this.createdAt = LocalDateTime.now();
+        this.expiredAt = expiredAt;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getOriginalUrl() {
-        return originalUrl;
-    }
-
-    public void setOriginalUrl(String originalUrl) {
-        this.originalUrl = originalUrl;
-    }
-
-    public String getShortCode() {
-        return shortCode;
-    }
-
-    public void setShortCode(String shortCode) {
-        this.shortCode = shortCode;
-    }
-
-    public Date getCreationDate() {
-        return creationDate;
-    }
-
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
-    }
-
-    public Date getExpirationDate() {
-        return expirationDate;
-    }
-
-    public void setExpirationDate(Date expirationDate) {
-        this.expirationDate = expirationDate;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    @Override
-    public String toString() {
-        return "UrlShortener{" +
-                "id='" + id + '\'' +
-                ", originalUrl='" + originalUrl + '\'' +
-                ", shortCode='" + shortCode + '\'' +
-                ", creationDate=" + creationDate +
-                ", expirationDate=" + expirationDate +
-                ", active=" + active +
-                ", message='" + message + '\'' +
-                '}';
-    }
 }

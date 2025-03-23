@@ -1,9 +1,10 @@
 package in.guardianservice.link.shortner.controller;
 
 import in.guardianservice.link.shortner.constants.Constant;
-import in.guardianservice.link.shortner.model.UrlShortener;
+import in.guardianservice.link.shortner.repository.EmployeeRepository;
 import in.guardianservice.link.shortner.response.BaseResponse;
 import in.guardianservice.link.shortner.service.UrlService;
+import in.guardianservice.link.shortner.utility.ResponseUtility;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 public class UrlController {
@@ -25,7 +28,7 @@ public class UrlController {
 
     @GetMapping("/welcome")
     public String welcome() {
-        return "********** Welcome to link shortner **********";
+        return "********** Welcome to link shortener **********";
     }
 
     @PostMapping("/shorten")
@@ -44,4 +47,5 @@ public class UrlController {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, Constant.NO_LINK_FOUND_BY_SHORT_CODE);
         }
     }
+
 }

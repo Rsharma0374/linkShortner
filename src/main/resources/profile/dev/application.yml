@@ -9,7 +9,3 @@ log:
 # Security settings
 security:
   ignored: /**/public
-
-mongo:
-  spring:
-    uri: mongodb://localhost:27017/linkShortner?retryWrites=true&w=majority
