@@ -1,6 +1,6 @@
 package in.guardianservice.link.shortner.controller;
 
-import com.guardianservices.kafka.services.KafkaProducerService;
+//import com.guardianservices.kafka.services.KafkaProducerService;
 import in.guardianservice.link.shortner.constants.Constant;
 import in.guardianservice.link.shortner.repository.EmployeeRepository;
 import in.guardianservice.link.shortner.request.DashboardDetailsRequest;
@@ -26,14 +26,14 @@ public class UrlController {
 
     private static final Logger logger = LoggerFactory.getLogger(UrlController.class);
 
-    private final KafkaProducerService producerService;
+//    private final KafkaProducerService producerService;
 
     @Autowired
     private UrlService urlService;
 
-    public UrlController(KafkaProducerService producerService) {
-        this.producerService = producerService;
-    }
+//    public UrlController(KafkaProducerService producerService) {
+//        this.producerService = producerService;
+//    }
 
     @GetMapping("/welcome")
     public String welcome() {
