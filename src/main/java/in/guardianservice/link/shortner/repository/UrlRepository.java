@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -30,8 +31,8 @@ public class UrlRepository {
     }
 
     public boolean saveUrlShort(UrlShortener urlShortener) {
-        String sql = "INSERT INTO url (longurl, shortcode, shorturl, qrcode, created_at, expired_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO url (longurl, shortcode, shorturl, qrcode, created_at, expired_at, user_name) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         int result = jdbcTemplate.update(sql,
                 urlShortener.getLongUrl(),
@@ -39,10 +40,18 @@ public class UrlRepository {
                 urlShortener.getShortUrl(),
                 urlShortener.getQrCode(),
                 urlShortener.getCreatedAt(),
-                urlShortener.getExpiredAt());
+                urlShortener.getExpiredAt(),
+                urlShortener.getUser());
 
         return result > 0; // Returns true if insert is successful
     }
+
+    public List<UrlShortener> getUrlDataByUser(String identifier) {
+        String sql = "SELECT * FROM url WHERE user_name = ?";
+
+        return jdbcTemplate.query(sql, new Object[]{identifier}, new UrlShortenerRowMapper());
+    }
+
     // Custom RowMapper to map ResultSet to UrlShortener object
     private static class UrlShortenerRowMapper implements RowMapper<UrlShortener> {
         @Override

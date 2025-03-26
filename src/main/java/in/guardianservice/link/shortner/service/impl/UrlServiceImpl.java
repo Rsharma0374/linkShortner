@@ -3,6 +3,7 @@ package in.guardianservice.link.shortner.service.impl;
 import in.guardianservice.link.shortner.constants.Constant;
 import in.guardianservice.link.shortner.model.UrlShortener;
 import in.guardianservice.link.shortner.repository.UrlRepository;
+import in.guardianservice.link.shortner.request.DashboardDetailsRequest;
 import in.guardianservice.link.shortner.response.BaseResponse;
 import in.guardianservice.link.shortner.response.Error;
 import in.guardianservice.link.shortner.service.UrlService;
@@ -28,7 +29,7 @@ public class UrlServiceImpl implements UrlService {
     private UrlRepository urlRepository;
 
     @Override
-    public BaseResponse createShortUrl(String originalUrl, int days) {
+    public BaseResponse createShortUrl(String originalUrl, int days, String user) {
         logger.info("Inside createShortUrl method");
         Collection<Error> errors = new ArrayList<>();
         BaseResponse baseResponse = new BaseResponse();
@@ -46,7 +47,7 @@ public class UrlServiceImpl implements UrlService {
             String shortUrl = HTTPS_SHORTENER_GUARDIANSERVICES_IN + shortCode;
             String qrCode = QRCodeGenerator.generateQRCode(shortUrl);
 
-            UrlShortener urlShortener = new UrlShortener(originalUrl, shortCode, shortUrl, qrCode, createExpiryDate(days));
+            UrlShortener urlShortener = new UrlShortener(originalUrl, shortCode, shortUrl, qrCode, createExpiryDate(days), user);
             boolean success = urlRepository.saveUrlShort(urlShortener);
             if (success) {
                 logger.info("Successfully saved url shortener");
@@ -135,6 +136,24 @@ public class UrlServiceImpl implements UrlService {
     private boolean checkLinkExpire(LocalDateTime expirationDate) {
         LocalDateTime now = LocalDateTime.now();
         return expirationDate.isBefore(now);
+    }
+
+    @Override
+    public BaseResponse getDashboardDetails(DashboardDetailsRequest dashboardDetailsRequest) {
+        BaseResponse baseResponse = null;
+
+        try {
+            List<UrlShortener> urlShortenerList = urlRepository.getUrlDataByUser(dashboardDetailsRequest.getIdentifier());
+            if (urlShortenerList.isEmpty()) {
+                baseResponse = ResponseUtility.getBaseResponse(HttpStatus.NO_CONTENT, ResponseUtility.getNoContentFoundError());
+            } else {
+                baseResponse = ResponseUtility.getBaseResponse(HttpStatus.OK, urlShortenerList);
+            }
+        } catch (Exception e) {
+            logger.error("exception occurred while getting dashboard details", e);
+            baseResponse = ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(e));
+        }
+        return baseResponse;
     }
 
 }

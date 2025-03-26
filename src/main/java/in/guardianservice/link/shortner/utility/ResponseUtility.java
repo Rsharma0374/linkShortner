@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -40,4 +41,17 @@ public class ResponseUtility {
                 .errors(errors)
                 .build();
     }
+
+    public static Collection<Error> getNoContentFoundError() {
+        Collection<Error> errors = new ArrayList<>();
+        errors.add(Error.builder()
+                .message("No content found")
+                .errorCode(String.valueOf(Error.ERROR_TYPE.SYSTEM.toCode()))
+                .errorType(Error.ERROR_TYPE.SYSTEM.name())
+                .level(Error.SEVERITY.HIGH.name())
+                .build());
+
+        return errors;
+    }
+
 }

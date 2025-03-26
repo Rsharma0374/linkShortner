@@ -32,17 +32,21 @@ public class UrlShortener {
     @Column(name = "expired_at")
     private LocalDateTime expiredAt;
 
+    @Column(name = "user_name")
+    private String user;
+
     // Constructors, getters, and setters
 
     public UrlShortener() {}
 
-    public UrlShortener(String longUrl, String shortCode, String shortUrl, String qrCode, LocalDateTime expiredAt) {
+    public UrlShortener(String longUrl, String shortCode, String shortUrl, String qrCode, LocalDateTime expiredAt, String user) {
         this.longUrl = longUrl;
         this.shortCode = shortCode;
         this.shortUrl = shortUrl;
         this.qrCode = qrCode;
         this.createdAt = LocalDateTime.now();
         this.expiredAt = expiredAt;
+        this.user = user;
     }
 
 }
