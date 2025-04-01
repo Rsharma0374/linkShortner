@@ -27,5 +27,5 @@ eureka:
 
 
 base:
-  url: https://shortener.guardianservices.in/
+  url: https://short.guardianservices.in/
 
