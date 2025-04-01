@@ -23,3 +23,7 @@ eureka:
   instance:
     prefer-ip-address: true
     hostname: localhost
+
+
+base:
+  url: http://localhost:10007/

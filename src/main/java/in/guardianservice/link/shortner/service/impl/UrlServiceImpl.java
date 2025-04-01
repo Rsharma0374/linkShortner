@@ -4,6 +4,7 @@ import in.guardianservice.link.shortner.constants.Constant;
 import in.guardianservice.link.shortner.model.UrlShortener;
 import in.guardianservice.link.shortner.repository.UrlRepository;
 import in.guardianservice.link.shortner.request.DashboardDetailsRequest;
+import in.guardianservice.link.shortner.request.UrlRequest;
 import in.guardianservice.link.shortner.response.BaseResponse;
 import in.guardianservice.link.shortner.response.Error;
 import in.guardianservice.link.shortner.service.UrlService;
@@ -13,6 +14,7 @@ import in.guardianservice.link.shortner.utility.ShortcodeGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 ;
@@ -25,14 +27,20 @@ public class UrlServiceImpl implements UrlService {
     private static final Logger logger = LoggerFactory.getLogger(UrlServiceImpl.class);
     public static final String HTTPS_SHORTENER_GUARDIANSERVICES_IN = "https://shortener.guardianservices.in/";
 
+    @Value("${base.url}")
+    private String baseUrl;
+
     @Autowired
     private UrlRepository urlRepository;
 
     @Override
-    public BaseResponse createShortUrl(String originalUrl, int days, String user) {
+    public BaseResponse saveNewEntry(UrlRequest urlRequest) {
         logger.info("Inside createShortUrl method");
         Collection<Error> errors = new ArrayList<>();
         BaseResponse baseResponse = new BaseResponse();
+        String originalUrl = urlRequest.getLongUrl();
+        String user = urlRequest.getUser();
+        int days = urlRequest.getExpiryDay();
         try {
             if (validateUrl(originalUrl, errors)) return ResponseUtility.getBaseResponse(HttpStatus.BAD_REQUEST, errors);
 
@@ -44,14 +52,15 @@ public class UrlServiceImpl implements UrlService {
             if (null != baseResponse) {
                 return baseResponse;
             }
-            String shortUrl = HTTPS_SHORTENER_GUARDIANSERVICES_IN + shortCode;
+            String shortUrl = baseUrl + shortCode;
             String qrCode = QRCodeGenerator.generateQRCode(shortUrl);
 
             UrlShortener urlShortener = new UrlShortener(originalUrl, shortCode, shortUrl, qrCode, createExpiryDate(days), user);
             boolean success = urlRepository.saveUrlShort(urlShortener);
             if (success) {
+                List<UrlShortener> urlShortenerList = urlRepository.getUrlDataByUser(user);
                 logger.info("Successfully saved url shortener");
-                return ResponseUtility.getBaseResponse(HttpStatus.OK, urlShortener);
+                return ResponseUtility.getBaseResponse(HttpStatus.OK, urlShortenerList);
             } else {
                 logger.error("Failed to save url shortener");
                 errors.add(Error.builder()
@@ -151,6 +160,51 @@ public class UrlServiceImpl implements UrlService {
             }
         } catch (Exception e) {
             logger.error("exception occurred while getting dashboard details", e);
+            baseResponse = ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(e));
+        }
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse deleteEntry(UrlRequest urlRequest) {
+        BaseResponse baseResponse = null;
+        try {
+            String shortUrl = urlRequest.getShortUrl();
+            String user = urlRequest.getUser();
+
+            boolean recordDeleted = urlRepository.deleteRecordByShortUrlAndUser(shortUrl, user);
+            if (recordDeleted) {
+                List<UrlShortener> urlShortenerList = urlRepository.getUrlDataByUser(user);
+                baseResponse = ResponseUtility.getBaseResponse(HttpStatus.OK, urlShortenerList);
+            } else {
+                baseResponse = ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, ResponseUtility.getInternalServerErrorError("Error while deleting record."));
+            }
+
+        } catch (Exception e) {
+            logger.error("exception occurred while deleting entry", e);
+            baseResponse = ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(e));
+        }
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse updateEntry(UrlRequest urlRequest) {
+        BaseResponse baseResponse = null;
+        try {
+            String longUrl = urlRequest.getLongUrl();
+            int expiryDay = urlRequest.getExpiryDay();
+            String user = urlRequest.getUser();
+
+            boolean updateRecode = urlRepository.updateRecordBylongUrl(longUrl, createExpiryDate(expiryDay), user);
+            if (updateRecode) {
+                List<UrlShortener> urlShortenerList = urlRepository.getUrlDataByUser(user);
+                baseResponse = ResponseUtility.getBaseResponse(HttpStatus.OK, urlShortenerList);
+            } else {
+                baseResponse = ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, ResponseUtility.getInternalServerErrorError("Error while updating record."));
+            }
+
+        } catch (Exception e) {
+            logger.error("exception occurred while deleting entry", e);
             baseResponse = ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(e));
         }
         return baseResponse;
