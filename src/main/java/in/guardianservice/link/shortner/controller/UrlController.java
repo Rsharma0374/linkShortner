@@ -33,17 +33,6 @@ public class UrlController {
         return "********** Welcome to link shortener **********";
     }
 
-//    @PostMapping("/shorten")
-//    public ResponseEntity<BaseResponse> shortenUrl(@RequestParam String originalUrl, @RequestParam int days, @RequestParam String user) {
-//        logger.info(Constant.CONTROLLER_STARTED, "shorten");
-//
-////        producerService.sendUrlCreatedEvent(originalUrl, days, user);
-//
-//        urlService.createShortUrl(originalUrl, days, user);
-//        return new ResponseEntity<>(ResponseUtility.getBaseResponse(HttpStatus.OK, "Your request in in progress"), HttpStatus.OK);
-//    }
-
-
     @PostMapping("/get-dashboard-details")
     public ResponseEntity<BaseResponse> dashboardDetails(@RequestBody DashboardDetailsRequest dashboardDetailsRequest) {
         logger.info(Constant.CONTROLLER_STARTED, "get-dashboard-details");

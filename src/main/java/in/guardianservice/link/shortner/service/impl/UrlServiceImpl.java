@@ -1,5 +1,6 @@
 package in.guardianservice.link.shortner.service.impl;
 
+import in.guardianservice.link.shortner.client.AuthService;
 import in.guardianservice.link.shortner.constants.Constant;
 import in.guardianservice.link.shortner.model.UrlShortener;
 import in.guardianservice.link.shortner.repository.UrlRepository;
@@ -11,13 +12,14 @@ import in.guardianservice.link.shortner.service.UrlService;
 import in.guardianservice.link.shortner.utility.QRCodeGenerator;
 import in.guardianservice.link.shortner.utility.ResponseUtility;
 import in.guardianservice.link.shortner.utility.ShortcodeGenerator;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-;
+import com.guardianservices.kafka.services.KafkaProducerService;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -25,13 +27,21 @@ import java.util.*;
 public class UrlServiceImpl implements UrlService {
 
     private static final Logger logger = LoggerFactory.getLogger(UrlServiceImpl.class);
-    public static final String HTTPS_SHORTENER_GUARDIANSERVICES_IN = "https://shortener.guardianservices.in/";
+    public static final String URL_SHORTENER = "URL_SHORTENER";
+    private final KafkaProducerService producerService;
 
     @Value("${base.url}")
     private String baseUrl;
 
     @Autowired
+    private AuthService authService;
+
+    @Autowired
     private UrlRepository urlRepository;
+
+        public UrlServiceImpl(KafkaProducerService producerService) {
+        this.producerService = producerService;
+    }
 
     @Override
     public BaseResponse saveNewEntry(UrlRequest urlRequest) {
@@ -58,6 +68,10 @@ public class UrlServiceImpl implements UrlService {
             UrlShortener urlShortener = new UrlShortener(originalUrl, shortCode, shortUrl, qrCode, createExpiryDate(days), user);
             boolean success = urlRepository.saveUrlShort(urlShortener);
             if (success) {
+                String userEmail = authService.getEmailByUsername(user, URL_SHORTENER);
+                if (StringUtils.isNotBlank(userEmail)) {
+                    producerService.sendNotification(urlShortener.getLongUrl(), urlShortener.getExpiredAt(), urlShortener.getShortUrl(), userEmail);
+                }
                 List<UrlShortener> urlShortenerList = urlRepository.getUrlDataByUser(user);
                 logger.info("Successfully saved url shortener");
                 return ResponseUtility.getBaseResponse(HttpStatus.OK, urlShortenerList);
