@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.guardianservices.kafka.services", "in.guardianservice.link.shortner"})
+@ComponentScan(basePackages = {"com.guardianservices.kafka", "in.guardianservice.link.shortner"})
 @EnableFeignClients
 public class Application {
 
