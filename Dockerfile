@@ -12,7 +12,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests -Pprod
 
 # Stage 2: Run the application
-FROM openjdk:17-jdk-alpine
+FROM openjdk:17-jdk-slim
 
 # Set the working directory
 WORKDIR /linkShortner
