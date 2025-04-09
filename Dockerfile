@@ -1,5 +1,5 @@
 # Stage 1: Build the application using Maven
-FROM maven:3.9.4-eclipse-temurin-17-alpine AS build
+FROM maven:3.9.4-openjdk-17-slim AS build
 
 # Set the working directory
 WORKDIR /build
